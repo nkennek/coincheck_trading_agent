@@ -1,0 +1,1 @@
+# coincheck_trading_agent
