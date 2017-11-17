@@ -76,10 +76,10 @@ class BTCTrader(object):
         if not os.path.exists(output_path):
             os.mkdir(output_path)
 
-        with open(os.path.join(outputpath, 'balance.json'), 'w') as f:
+        with open(os.path.join(output_path, 'balance.json'), 'w') as f:
             json.dump(balance, f)
 
-        with open(os.path.join(outputpath, 'transactions.json'), 'w') as f:
+        with open(os.path.join(output_path, 'transactions.json'), 'w') as f:
             json.dump(transactions, f)
 
     def _listen_info(self):
@@ -150,9 +150,6 @@ class BTCTrader(object):
 
                 return 0
 
-    #def __del__(self):
-    #    self.report()
-
 
 if __name__ == '__main__':
     api_keys = json.load(
@@ -165,4 +162,7 @@ if __name__ == '__main__':
         secret_accesskey=api_keys['secret_accesskey'],
     )
 
-    trader.run()
+    try:
+        trader.run()
+    except KeyboardInterrupt:
+        trader.report()
