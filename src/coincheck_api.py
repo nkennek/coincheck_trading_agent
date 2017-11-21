@@ -268,7 +268,7 @@ class CoincheckAPIManager(object):
 
         url = self._build_url(endpoint)
         body = json.dumps(body)
-        header = self._build_header(for_private=not is_public, url=url, body=body, params=None)
+        header = self._build_header(for_private=not is_public, url=url, body=body)
         response = requests.post(url, headers=header, data=body)
         return self._parse_result(response)
 

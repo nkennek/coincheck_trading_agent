@@ -23,27 +23,26 @@ class BTCTrader(object):
 
     """
 
-    def __init__(self, Policy, accesskey, secret_accesskey, sleep_interval=2, budget_ratio=0.01):
+    def __init__(self, Policy, accesskey, secret_accesskey, debug=True, sleep_interval=1, budget_ratio=0.01):
         self.api = CoincheckAPIManager(
             accesskey, secret_accesskey,
-            debug=True,
+            debug=debug,
             private_request_interval=sleep_interval
         )
         self.waiting_order = False
         self.waiting_order_ids = []
         self.last_order_id = -1
-        self.budget_ratio = budget_ratio # 危険なので使用できる資産を制限する
 
         #現在の資産を確認
-        self.balance = self.api.private_balance()
+        _, self.balance = self.api.private_balance()
 
-        self.policy = Policy(balance=self.balance)
+        self.policy = Policy(balance=self.balance, limit_budget=budget_ratio)
 
     def run(self):
         while True:
             #注文を投げている場合，ステータスの確認と更新
             if self.waiting_order:
-                _, tarnsactions = self.api.private_transactions(pagenate=True)
+                _, transactions = self.api.private_transactions(pagenate=True)
                 if self.last_order_id != transactions['data'][0]['order_id']:
                     self.last_order_id = transactions['data'][0]['order_id']
                     for idx, order_id in enumerate(self.waiting_order_ids):
@@ -89,33 +88,17 @@ class BTCTrader(object):
 
         _, ticker = self.api.public_ticker()
         _, trades = self.api.public_trades()
-        _, orderbooks = self.api.public_orderbooks()
+        #_, orderbooks = self.api.public_orderbooks()
         _, balance = self.api.private_balance()
-
-        balance = self._format_balance(balance)
 
         return {
             "ticker": ticker,
             "trades": trades,
-            "orderbooks": orderbooks,
+            #"orderbooks": orderbooks,
             "balance": balance
         }
 
-    def _format_balance(self, balance):
-        # multiply budget ratio
-        if not balance['success']:
-            raise ValueError(str(balance))
-
-        del balance['success']
-        for key, value in balance.items():
-            if key == 'success':
-                continue
-
-            balance[key] = float(balance[key])*self.budget_ratio
-
-        return balance
-
-    def _take(action):
+    def _take(self, action):
         """
         アクションに応じたオーダAPI叩き
         """
@@ -160,6 +143,9 @@ if __name__ == '__main__':
         Policy=Policy,
         accesskey=api_keys['accesskey'],
         secret_accesskey=api_keys['secret_accesskey'],
+        debug=False,
+        sleep_interval=1,
+        budget_ratio=0.05
     )
 
     try:
